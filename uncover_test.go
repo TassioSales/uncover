@@ -69,3 +69,29 @@ func TestExecute_RelayHonorsCancellationWhenFull(t *testing.T) {
 		t.Fatal("timed out waiting for results channel to close after cancellation")
 	}
 }
+
+
+func TestExecute_AnonymousScanMalware(t *testing.T) {
+	agent := &mockAgent{name: "scanmalware"}
+	s := &Service{
+		Agents:   []sources.Agent{agent},
+		Options:  &Options{Agents: []string{"scanmalware"}, Queries: []string{"test"}},
+		Provider: &sources.Provider{},
+		Session:  &sources.Session{},
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	results, err := s.Execute(ctx)
+	require.NoError(t, err)
+
+	count := 0
+	for range results {
+		count++
+		if count >= 3 {
+			break
+		}
+	}
+	require.Equal(t, 3, count)
+}
